@@ -13,10 +13,21 @@ class LVN
   private
   def vn_search_add( str )
     return @n2v[str], true if @n2v[str] != nil
-    @last_val = @last_val + 1
-    @n2v[str] =  @last_val
+    # str is not in n2v
+    vn_add( str )
     return @last_val, false
   end
+
+  def vn_add( str )
+    @last_val = @last_val + 1 # Create a new VN
+    @n2v[str] = @last_val # Give str the new VN, add it to the table
+    # Check if str has multiple notations via commutivity
+    # Find any commutative operators
+    i = str.index('*') if not i = str.index('+')
+    # Reverse operands for commutative ops
+    @n2v[str[i+1,-1] + str[i] + str[0,i-1]] = @last_val if i != nil
+  end
+    
 
   def vn_copy_stmt( s )
     v, found = vn_search_add( s.op1 )
