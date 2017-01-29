@@ -18,14 +18,71 @@ class LVN
     return @last_val, false
   end
 
+
+  def vn_add_commutative( str, operand1, op, operand2  )
+    # Reverse operands for commutative ops
+    if (op == '*') or (op == '+')
+      rev_op_str = [operand1, op, operand2] * ' '
+      # Add Reversed operands to VN table
+      @n2v[rev_op_str] = @last_val
+    end
+  end
+
+
+  def vn_add_equiv( str, operand1, op, operand2 )
+    # Construct all equivalent relations from VN Table
+    case op
+    when "+"
+      # We have operand1 + operand2 = last_val
+      # last_val - operand1 = operand2
+      equiv_str = [@last_val, '-', operand1] * ' '
+      @n2v[equiv_str] = operand2
+      # last_val - operand2 = operand1
+      equiv_str = [@last_val, '-', operand2] * ' '
+      @n2v[equiv_str] = operand1
+    when "*"
+      # We have operand1 * operand2 = last_val
+      # last_val / operand1 = operand2
+      equiv_str = [@last_val, '/', operand1] * ' '
+      @n2v[equiv_str] = operand2
+      # last_val / operand2 = operand1
+      equiv_str = [@last_val, '/', operand2] * ' '
+      @n2v[equiv_str] = operand1
+    when "-"
+      # We have operand1 - operand2 = last_val
+      # last_val + operand2 = operand1
+      equiv_str = [@last_val, '+', operand2] * ' '
+      @n2v[equiv_str] = operand1
+      vn_add_commutative( equiv_str )
+      # operand1 - last_val = operand2
+      equiv_str = [operand1, '-',@last_val] * ' '
+      @n2v[equiv_str] = operand2
+    when "/"
+      # We have operand1 / operand2 = last_val
+      # last_val * operand2 = operand1
+      equiv_str = [@last_val, '*', operand2] * ' '
+      @n2v[equiv_str] = operand1
+      vn_add_commutative( equiv_str )
+      # operand1 / last_val = operand2
+      equiv_str = [operand1, '/',@last_val] * ' '
+      @n2v[equiv_str] = operand2
+    end
+  end
+
+
   def vn_add( str )
     @last_val = @last_val + 1 # Create a new VN
-    @n2v[str] = @last_val # Give str the new VN, add it to the table
-    # Check if str has multiple notations via commutivity
-    # Find any commutative operators
+    @n2v[str] = @last_val # Give str the new VN, add it to the VN table
     i = str.index('*') if not i = str.index('+')
-    # Reverse operands for commutative ops
-    @n2v[str[i+1,-1] + str[i] + str[0,i-1]] = @last_val if i != nil
+    if i != nil
+      operand1 = str[i+1..-1].strip
+      operand2 = str[0..i-1].strip
+      op = str[i].strip
+      # Add commutative op representations to VN table
+      vn_add_commutative( str, operand1, op, operand2 )
+      # Add equivalent representations to VN table
+      vn_add_equiv( str, operand1, op, operand2 )
+    end
   end
     
 
